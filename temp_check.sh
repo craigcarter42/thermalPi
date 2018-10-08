@@ -1,16 +1,24 @@
 #!/bin/bash
 # Craig Carter 2018, box256
 # Configuration:
-# Path to directory 
-  sys_path="/home/pi/..."
+# Path to directory
+  sys_path="/home/pi/thermalPi"
 # Set the threshold for fan power on:
   gold_temp="45"
 
 # Load config files:
 # -- Check current fan state:
-  current_state="`sed -n 1p $sys_path/current_fan_state.txt`"
+  if [ -e $sys_path/current_fan_state.txt ]; then
+     current_state="`sed -n 1p $sys_path/current_fan_state.txt`"
+  else
+    touch $sys_path/current_fan_state.txt
+  fi
 # -- Logging YES or NO:
-  logging="`sed -n 1p $sys_path/logging.conf`"
+  if [ -e $sys_path/logging.conf ]; then
+    logging="`sed -n 1p $sys_path/logging.conf`"
+  else
+    touch $sys_path/logging.conf
+  fi
 
 # Get date and time:
   current_date=$(date '+%d/%m/%Y %H:%M:%S');
@@ -24,10 +32,6 @@
   gpu_temp=$(/opt/vc/bin/vcgencmd measure_temp | awk -F "[=\\.']" '{print $2}')
   echo " thermalPi -- GPU temp: $gpu_temp"
 
-# Cron Snitch: log each launch:
-  echo " thermalPi -- launch: "$current_date >> $sys_path/cron_launch.log
-  echo " thermalPi -- fan state: "$current_state >> $sys_path/cron_launch.log
-
 # Generate and update log file for system status information:
 system_log() {
 # Update current state:
@@ -40,20 +44,27 @@ system_log() {
   echo " GPU temperature: "$gpu_temp >> $sys_path/activity.log
 }
 
-if [ "$cpu_temp_final" -ge "$gold_temp" ]; then
-    echo " thermalPi -- fan = ON"
+# Check CPU temp vs. gold temp
+  if [ "$cpu_temp_final" -ge  "$gold_temp" ]; then
+    echo " thermalPi -- start fan"
     python $sys_path/fan_power.py on
     echo "on" > $sys_path/current_fan_state.txt
     if [ "$logging" == "on" ]; then
       system_log "'running' --continue"
+    else
+      echo " thermalPi -- logging = OFF"
     fi
+# Exit scipt::
     exit
-else
-    if [ "$current_state" -eq "off" ]; then
-        echo " thermalPi -- fan = OFF"
+  else
+# What is the fans current state?
+    if [ "$current_state" == "off" ]; then # -eq or ==
+        echo " thermalPi -- halt fan"
         echo "off" > $sys_path/current_fan_state.txt
         if [ "$logging" == "on" ]; then
           system_log "'standby' --exit"
+        else
+          echo " thermalPi -- logging = OFF"
         fi
         exit
     else
@@ -61,7 +72,9 @@ else
         echo "off" > $sys_path/current_fan_state.txt
         if [ "$logging" == "on" ]; then
           system_log "'standby' --exit"
+        else
+          echo " thermalPi -- logging = OFF"
         fi
         exit
     fi
-fi
+  fi
