@@ -1,2 +1,2 @@
-# H1 thermalPi
+## thermalPi
 Raspberry Pi cooling system
