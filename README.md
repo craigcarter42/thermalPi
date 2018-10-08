@@ -1,5 +1,5 @@
 # thermalPi
-Cron based CPU and GPU tempature monitoring system for the Raspberry Pi platform only.
+Cron based CPU and GPU temperature monitoring system for the Raspberry Pi platform only.
 
 #### Crontab:
 You can set Cron on your system to check at any interval you desire, this system was tested with two minute timing. See instructions below on how to create a custom Crontab.  
@@ -17,7 +17,7 @@ Code must use Bash to run
  - Set pin number for the control GPIO
  
 #### The Fan:
-How to wire the fan for sucess not sparks.
+How to wire the fan for success, not sparks.
 
 ### Updating Code:
 - Better error logging
